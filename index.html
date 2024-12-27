@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <title>Hotels Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #f7fafc, #edf2f7);
+        }
+        .header {
+            background: #2b6cb0;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 10px;
+            margin: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .dropdown {
+            text-align: center;
+            margin: 20px;
+        }
+        .dropdown select {
+            padding: 10px;
+            font-size: 1.2em;
+        }
+        .chart-section {
+            background: white;
+            margin: 20px;
+            padding: 20px;
+            border: 2px solid #2b6cb0;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .metrics-box {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            background: white;
+            padding: 20px;
+            margin: 20px;
+            border: 2px solid #2b6cb0;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .metrics-box div {
+            text-align: center;
+            margin: 10px;
+        }
+        .metrics-box h2 {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Hotels Dashboard</h1>
+    </div>
+    <div class="dropdown">
+        <label for="hotelSelect"><strong>Otel Seçin:</strong></label>
+        <select id="hotelSelect" onchange="updateDashboard()">
+            <option value="BALAT">PETRION HOTEL BALAT</option>
+            <option value="NIS">NIS TAKSIM</option>
+            <option value="ESKICILER">ISPARTA ESKICILER KONAGI</option>
+        </select>
+    </div>
+    <div id="dashboard">
+        <!-- Content updates dynamically based on the selected hotel -->
+    </div>
+    <script>
+        const exchangeRate = 0.9; // Example: Conversion rate from TRY to EURO
+
+        const hotelsData = {
+            "BALAT": {
+                "title": "PETRION HOTEL BALAT",
+                "totalRevenue": "216,570 EUR",
+                "channelsSummary": {
+                    "Booking.Com (%15)": "117,049 EUR",
+                    "Kendi Satışlarım": "35,871 EUR",
+                    "Expedia (%18)": "25,222 EUR",
+                    "Walk-in": "17,430 EUR",
+                    "Telefon": "4,899 EUR",
+                    "SabeeApp Rezervasyon Motoru": "5,713 EUR",
+                    "MEHMET KAFE KOMŞU": "1,128 EUR",
+                    "iptal - no show parasi": "230 EUR",
+                    "OtelZ (%15)": "775 EUR",
+                    "Ets / Odamax (%15)": "373 EUR",
+                    "SİMO BEY": "965 EUR",
+                    "E-mail": "158 EUR"
+                },
+                "monthlyRevenue": [
+                    ["January", 8404, 455],
+                    ["February", 9741, 229],
+                    ["March", 8792, 163],
+                    ["April", 24065, 467],
+                    ["May", 28806, 598],
+                    ["June", 14048, 419],
+                    ["July", 14050, 468],
+                    ["August", 17086, 315],
+                    ["September", 23047, 697],
+                    ["October", 25027, 899],
+                    ["November", 19228, 577],
+                    ["December", 15852, 1327]
+                ],
+                "occupancy": [23.34, 31.24, 27.32, 64.71, 67.93, 33.73, 34.16, 45.73, 63.92, 72.87, 56.08, 45.35]
+            },
+            "NIS": {
+                "title": "NIS TAKSIM",
+                "totalRevenue": "224,681 EUR",
+                "channelsSummary": {
+                    "Kendi Satışlarım": "28,718 EUR",
+                    "Booking.Com (%15)": "131,693 EUR",
+                    "SabeeApp Rezervasyon Motoru": "1,391 EUR",
+                    "Telefon": "6,858 EUR",
+                    "Expedia (%18)": "54,251 EUR",
+                    "iptal - no show parası": "921 EUR",
+                    "VTS TURİZM LTD.ŞTİ.": "292 EUR",
+                    "Walk-in": "266 EUR"
+                },
+                "monthlyRevenue": [
+                    ["Ocak", 12582, 0],
+                    ["Şubat", 12975, 0],
+                    ["Mart", 11009, 0],
+                    ["Nisan", 17062, 0],
+                    ["Mayıs", 27392, 0],
+                    ["Haziran", 20505, 0],
+                    ["Temmuz", 20447, 0],
+                    ["Ağustos", 22545, 0],
+                    ["Eylül", 23575, 0],
+                    ["Ekim", 22981, 0],
+                    ["Kasım", 17571, 0],
+                    ["Aralık", 15955, 0]
+                ],
+                "occupancy": [52.18, 62.07, 47.44, 59.8, 82.16, 71.76, 67.36, 76.28, 84.31, 84.44, 66.27, 55.03]
+            },
+            "ESKICILER": {
+                "title": "ISPARTA ESKICILER KONAGI",
+                "totalRevenue": "4,445,072 TRY",
+                "channelsSummary": {
+                    "Kendi Satışlarım": "1,952,276 TRY",
+                    "Booking.Com (%15)": "681,603 TRY",
+                    "SabeeApp Booking Engine": "370,219 TRY",
+                    "Telephone": "309,986 TRY",
+                    "Expedia (%18)": "412,289 TRY",
+                    "E-mail": "192,002 TRY",
+                    "Ets / Odamax (%15)": "181,378 TRY",
+                    "OtelZ (%15)": "73,713 TRY",
+                    "Walk-in": "77,487 TRY",
+                    "TatilSepeti": "10,312 TRY",
+                    "iptal - no show": "11,294 TRY"
+                },
+                "monthlyRevenue": [
+                    ["Ocak", 76095, 785],
+                    ["Şubat", 136029, 3434],
+                    ["Mart", 153104, 1900],
+                    ["Nisan", 413950, 26425],
+                    ["Mayıs", 413776, 20832],
+                    ["Haziran", 749607, 30475],
+                    ["Temmuz", 570552, 11314],
+                    ["Ğustos", 671832, 6838],
+                    ["Eylül", 412862, 53710],
+                    ["Ekim", 287901, 12165],
+                    ["Kasım", 187947, 2566],
+                    ["Aralık", 198933, 2034]
+                ],
+                "occupancy": [5.26, 8.89, 9.51, 22.81, 21.9, 39.12, 23.77, 28.01, 20.7, 11.88, 9.82, 7.47]
+            }
+        };
+
+        // Function to update the dashboard
+        function updateDashboard() {
+            const selectedHotel = document.getElementById("hotelSelect").value;
+            const data = hotelsData[selectedHotel];
+
+            // Prepare channel summary table
+            let channelSummaryHtml = "";
+            for (const [channel, value] of Object.entries(data.channelsSummary)) {
+                const currency = selectedHotel === "ESKICILER" ? "TRY" : "EUR";
+                channelSummaryHtml += `<tr><td>${channel}</td><td>${value}</td></tr>`;
+            }
+
+            // Update the dashboard content
+            document.getElementById("dashboard").innerHTML = `
+                <div class="metrics-box">
+                    <div>
+                        <h2>${data.title} - Toplam Brüt Gelir</h2>
+                        <p>${data.totalRevenue}</p>
+                    </div>
+                    <div>
+                        <h2>Kanal Gelir Özeti (Yıllık)</h2>
+                        <table border="1" style="margin: 0 auto; border-collapse: collapse; text-align: left;">
+                            <thead>
+                                <tr><th>Kanal</th><th>Toplam Gelir</th></tr>
+                            </thead>
+                            <tbody>
+                                ${channelSummaryHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="chart-section">
+                    <h2>Aylık Gelir Dağılımı</h2>
+                    <div id="bar_chart" style="width:100%; height:500px;"></div>
+                </div>
+                <div class="chart-section">
+                    <h2>Aylara Göre Doluluk Oranı</h2>
+                    <div id="line_chart" style="width:100%; height:500px;"></div>
+                </div>
+                <div class="chart-section">
+                    <h2>Kanal Gelir Dağılımı</h2>
+                    <div id="pie_chart" style="width:100%; height:500px;"></div>
+                </div>
+            `;
+
+            // Render bar chart for monthly revenue
+            const barData = [
+                {
+                    x: data.monthlyRevenue.map(item => item[0]),
+                    y: data.monthlyRevenue.map(item => item[1]),
+                    name: "Konaklama",
+                    type: "bar"
+                },
+                {
+                    x: data.monthlyRevenue.map(item => item[0]),
+                    y: data.monthlyRevenue.map(item => item[2]),
+                    name: "Hizmetler",
+                    type: "bar"
+                }
+            ];
+            Plotly.newPlot("bar_chart", barData, { title: `${data.title} - Aylık Gelir`, barmode: "stack" });
+
+            // Render line chart for occupancy
+            const lineData = [
+                {
+                    x: data.monthlyRevenue.map(item => item[0]),
+                    y: data.occupancy,
+                    type: "scatter",
+                    mode: "lines+markers",
+                    name: "Doluluk Oranı"
+                }
+            ];
+            Plotly.newPlot("line_chart", lineData, { title: `${data.title} - Doluluk Oranı` });
+
+            // Render pie chart for channel revenue
+            const pieData = [
+                {
+                    labels: Object.keys(data.channelsSummary),
+                    values: Object.values(data.channelsSummary).map(v => parseFloat(v.replace(/,/g, '').split(' ')[0])),
+                    type: "pie",
+                    name: "Kanal Gelir Dağılımı"
+                }
+            ];
+            Plotly.newPlot("pie_chart", pieData, { title: `${data.title} - Kanal Gelir` });
+        }
+
+        // Initialize the dashboard with the first hotel
+        updateDashboard();
+    </script>
+</body>
+</html>
