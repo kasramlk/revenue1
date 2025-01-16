@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Performance Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #87CEFA; /* Sky blue background */
+            color: #333333; /* Dark text for readability */
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9); /* Semi-transparent white container */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        h1, h2 {
+            color: #2c3e50; /* Slightly darker blue for headings */
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Otel Performans Dashboard</h1>
+        <p class="text-center">
+            Aşağıdaki dropdown menüsünü kullanarak oteller arasında geçiş yapabilirsiniz. Her otel için performans ve satış karşılaştırmaları görüntülenebilir.
+        </p>
+
+        <!-- Hotel Selector Dropdown -->
+        <div class="mb-4 text-center">
+            <label for="hotelSelector" class="form-label">Otel Seçiniz:</label>
+            <select id="hotelSelector" class="form-select w-50 mx-auto">
+                <option value="53odal">53 Odalı</option>
+                <option value="20apart">20 Apart</option>
+                <option value="17room">17 Room Residence</option>
+                <option value="23apart">23 Apart Rezidans</option>
+                <option value="topkapi">55 odalı Topkapı Old City</option>
+            </select>
+        </div>
+
+        <!-- Graphs -->
+        <h2 class="mt-4">Otel Performans Grafikleri</h2>
+        <div id="hotel-performance" class="mb-5"></div>
+        <p id="performance-analysis"></p>
+
+        <h2 class="mt-4">Sales Performance Dashboard</h2>
+        <div id="sales-performance-room-nights" class="mb-5"></div>
+        <p id="sales-room-nights-analysis"></p>
+    </div>
+
+    <script>
+        const months = [
+            "Ocak 2024", "Şubat 2024", "Mart 2024", "Nisan 2024", "Mayıs 2024", 
+            "Haziran 2024", "Temmuz 2024", "Ağustos 2024", "Eylül 2024", 
+            "Ekim 2024", "Kasım 2024", "Aralık 2024", "Ocak 2025"
+        ];
+
+        // Hotel Data
+        const hotelData = {
+            "53odal": {
+                name: "53 Odalı",
+                description: "Beşiktaş, İstanbul'daki orta segment otel performans detayları.",
+                performance: {
+                    occupancy: [44.89, 61.93, 55.60, 72.16, 75.90, 59.59, 81.19, 85.80, 89.62, 87.95, 90.25, 73.61],
+                    revenue: [1401147.33, 1674455.93, 1848872.53, 2445690.05, 2986605.57, 2412857.51, 3213730.07, 3350818.10, 3463346.00, 3581549.04, 3530392.65, 3194507.59]
+                },
+                sales: {
+                    roomNights: [142, 296, 343, 225, 485, 695, 406],
+                    roomNightsLastYear: [120, 220, 320, 200, 450, 600, 400]
+                }
+            },
+            "20apart": {
+                name: "20 Apart",
+                description: "Şişli, İstanbul'daki apart otelin detaylı performans verileri.",
+                performance: {
+                    occupancy: [20.05, 18.72, 38.94, 41.67, 42.17, 41.48, 75.91, 65.16, 46.67, 58.28, 77.33, 78.28],
+                    revenue: [255157.75, 163652.11, 360213.05, 436520.32, 507242.72, 604645.63, 1261524.55, 1085545.96, 771557.22, 947788.89, 1042786.65, 1238935.35]
+                },
+                sales: {
+                    roomNights: [63, 141, 324, 382, 82, 191, 148],
+                    roomNightsLastYear: [16, 28, 44, 15, 5, 48, 43]
+                }
+            },
+            "17room": {
+                name: "17 Room Residence",
+                description: "Taksim Gümüşsuyu'ndaki butik otelin performans raporu.",
+                performance: {
+                    occupancy: [5.65, 1.48, 15.21, 51.90, 46.54, 51.90, 74.37, 73.66, 51.49, 46.37, 33.51, 22.50],
+                    revenue: [101402.03, 10912.56, 117468.17, 476641.06, 558839.67, 586941.70, 779538.09, 802969.52, 703114.07, 617701.76, 412288.68, 251945.37]
+                },
+                sales: {
+                    roomNights: [22, 53, 220, 100, 145, 336, 344],
+                    roomNightsLastYear: [51, 7, 4, 16, 11, 50, 43]
+                }
+            },
+            "topkapi": {
+                name: "55 odalı Topkapı Old City",
+                description: "Topkapı, İstanbul'daki orta segment otel performans detayları.",
+                performance: {
+                    occupancy: [63.19, 75.68, 62.97, 69.31, 93.95, 89.33, 86.56, 87.24, 86.65, 89.83, 67.06, 61.60],
+                    revenue: [1219195.06, 1167174.46, 1065214.68, 1851735.84, 2741146.65, 2572848.31, 2837415.01, 3022936.41, 2551196.06, 2812654.22, 1863085.64, 1664842.26]
+                },
+                sales: {
+                    roomNights: [260, 538, 929, 1675, 2527, 1695, 1085],
+                    roomNightsLastYear: [1830, 571, 315, 1308, 1334, 1126, 1112]
+                }
+            },
+            "23apart": {
+                name: "23 Apart Rezidans",
+                description: "Nişantaşı Blv üzerindeki lüks otel detaylı performans verileri.",
+                performance: {
+                    occupancy: [31.42, 28.49, 23.84, 39.28, 47.19, 55.19, 76.61, 80.64, 70.97, 57.26, 51.39, 41.53],
+                    revenue: [1337162.47, 1330668.16, 866995.55, 1753554.14, 2417810.86, 3333933.69, 4344136.85, 4747128.35, 3651116.72, 3289489.89, 2820697.15, 2276702.88]
+                },
+                sales: {
+                    roomNights: [42, 83, 68, 141, 128, 322, 204],
+                    roomNightsLastYear: [196, 15, 18, 93, 280, 76, 46]
+                }
+            }
+        };
+
+        // Function to Update Graphs
+        function updateDashboard(hotelKey) {
+            const data = hotelData[hotelKey];
+
+            // Otel Performans Grafikleri
+            const occupancyTrace = {
+                x: months,
+                y: data.performance.occupancy,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Doluluk Oranı (%)',
+                line: { color: 'blue' },
+                marker: { size: 8 }
+            };
+            const revenueTrace = {
+                x: months,
+                y: data.performance.revenue,
+                type: 'bar',
+                name: 'Oda Geliri (TRY)',
+                marker: { color: 'orange', opacity: 0.8 }
+            };
+            Plotly.newPlot('hotel-performance', [occupancyTrace, revenueTrace], {
+                title: `${data.name} - Otel Performansı`,
+                xaxis: { title: 'Aylar' },
+                yaxis: { title: 'Değerler' },
+                barmode: 'group',
+                template: 'plotly_white'
+            });
+
+            // Room Nights Comparison
+            const salesRoomNightsTrace = {
+                x: months,
+                y: data.sales.roomNights,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Room Nights (This Year)',
+                line: { color: 'blue' }
+            };
+            const salesRoomNightsLastYearTrace = {
+                x: months,
+                y: data.sales.roomNightsLastYear,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Room Nights (Last Year)',
+                line: { color: 'red', dash: 'dash' }
+            };
+            Plotly.newPlot('sales-performance-room-nights', [salesRoomNightsTrace, salesRoomNightsLastYearTrace], {
+                title: `${data.name} - Room Nights Comparison`,
+                xaxis: { title: 'Aylar' },
+                yaxis: { title: 'Room Nights' },
+                template: 'plotly_white'
+            });
+        }
+
+        // Initial Render
+        updateDashboard("53odal");
+
+        // Dropdown Change Event
+        document.getElementById('hotelSelector').addEventListener('change', (e) => {
+            updateDashboard(e.target.value);
+        });
+    </script>
+</body>
+</html>
