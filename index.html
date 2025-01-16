@@ -3,267 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Performance Dashboard</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <title>Hotels Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(to right, #f7fafc, #edf2f7);
+            background-color: #87CEFA; /* Sky blue background */
+            color: #333333; /* Dark text for readability */
         }
-        .header {
-            background: #2b6cb0;
-            color: white;
+        .container {
+            background: rgba(255, 255, 255, 0.9); /* Semi-transparent white container */
             padding: 20px;
-            text-align: center;
-            border-radius: 10px;
-            margin: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 2.5em;
-        }
-        .dropdown {
-            text-align: center;
-            margin: 20px;
-        }
-        .dropdown select {
-            padding: 10px;
-            font-size: 1.2em;
-        }
-        .chart-section {
-            background: white;
-            margin: 20px;
-            padding: 20px;
-            border: 2px solid #2b6cb0;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        .metrics-box {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            background: white;
-            padding: 20px;
-            margin: 20px;
-            border: 2px solid #2b6cb0;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .metrics-box div {
-            text-align: center;
-            margin: 10px;
-        }
-        .metrics-box h2 {
-            margin: 10px 0;
+        h1, h2 {
+            color: #2c3e50; /* Slightly darker blue for headings */
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Hotels Dashboard</h1>
-    </div>
-    <div class="dropdown">
-        <label for="hotelSelect"><strong>Otel Seçin:</strong></label>
-        <select id="hotelSelect" onchange="updateDashboard()">
-            <option value="BALAT">PETRION HOTEL BALAT</option>
-            <option value="NIS">NIS TAKSIM</option>
-            <option value="ESKICILER">ISPARTA ESKICILER KONAGI</option>
-        </select>
-    </div>
-    <div id="dashboard">
-        <!-- Content updates dynamically based on the selected hotel -->
-    </div>
-    <script>
-        const exchangeRate = 0.9; // Example: Conversion rate from TRY to EURO
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Otel Performans Dashboard</h1>
+        <p class="text-center">
+            Aşağıdaki dropdown menüsünü kullanarak oteller arasında geçiş yapabilirsiniz. Her otel için performans ve satış karşılaştırmaları görüntülenebilir.
+        </p>
 
-        const hotelsData = {
-            "BALAT": {
-                "title": "PETRION HOTEL BALAT",
-                "totalRevenue": "216,570 EUR",
-                "channelsSummary": {
-                    "Booking.Com (%15)": "117,049 EUR",
-                    "Kendi Satışlarım": "35,871 EUR",
-                    "Expedia (%18)": "25,222 EUR",
-                    "Walk-in": "17,430 EUR",
-                    "Telefon": "4,899 EUR",
-                    "SabeeApp Rezervasyon Motoru": "5,713 EUR",
-                    "MEHMET KAFE KOMŞU": "1,128 EUR",
-                    "iptal - no show parasi": "230 EUR",
-                    "OtelZ (%15)": "775 EUR",
-                    "Ets / Odamax (%15)": "373 EUR",
-                    "SİMO BEY": "965 EUR",
-                    "E-mail": "158 EUR"
+        <!-- Hotel Selector Dropdown -->
+        <div class="mb-4 text-center">
+            <label for="hotelSelector" class="form-label">Otel Seçiniz:</label>
+            <select id="hotelSelector" class="form-select w-50 mx-auto">
+                <option value="53odal">53 Odalı</option>
+                <option value="20apart">20 Apart</option>
+                <option value="17room">17 Room Residence</option>
+                <option value="23apart">23 Apart Rezidans</option>
+                <option value="topkapi">55 odalı Topkapı Old City</option>
+            </select>
+        </div>
+
+        <!-- Graphs -->
+        <h2 class="mt-4">Otel Performans Grafikleri</h2>
+        <div id="hotel-performance" class="mb-5"></div>
+        <p id="performance-analysis"></p>
+
+        <h2 class="mt-4">Sales Performance Dashboard</h2>
+        <div id="sales-performance-room-nights" class="mb-5"></div>
+        <p id="sales-room-nights-analysis"></p>
+    </div>
+
+    <script>
+        const months = [
+            "Ocak 2024", "Şubat 2024", "Mart 2024", "Nisan 2024", "Mayıs 2024", 
+            "Haziran 2024", "Temmuz 2024", "Ağustos 2024", "Eylül 2024", 
+            "Ekim 2024", "Kasım 2024", "Aralık 2024", "Ocak 2025"
+        ];
+
+        // Hotel Data
+        const hotelData = {
+            "53odal": {
+                name: "53 Odalı",
+                description: "Beşiktaş, İstanbul'daki orta segment otel performans detayları.",
+                performance: {
+                    occupancy: [44.89, 61.93, 55.60, 72.16, 75.90, 59.59, 81.19, 85.80, 89.62, 87.95, 90.25, 73.61],
+                    revenue: [1401147.33, 1674455.93, 1848872.53, 2445690.05, 2986605.57, 2412857.51, 3213730.07, 3350818.10, 3463346.00, 3581549.04, 3530392.65, 3194507.59]
                 },
-                "monthlyRevenue": [
-                    ["January", 8404, 455],
-                    ["February", 9741, 229],
-                    ["March", 8792, 163],
-                    ["April", 24065, 467],
-                    ["May", 28806, 598],
-                    ["June", 14048, 419],
-                    ["July", 14050, 468],
-                    ["August", 17086, 315],
-                    ["September", 23047, 697],
-                    ["October", 25027, 899],
-                    ["November", 19228, 577],
-                    ["December", 15852, 1327]
-                ],
-                "occupancy": [23.34, 31.24, 27.32, 64.71, 67.93, 33.73, 34.16, 45.73, 63.92, 72.87, 56.08, 45.35]
+                sales: {
+                    roomNights: [142, 296, 343, 225, 485, 695, 406],
+                    roomNightsLastYear: [120, 220, 320, 200, 450, 600, 400]
+                }
             },
-            "NIS": {
-                "title": "NIS TAKSIM",
-                "totalRevenue": "224,681 EUR",
-                "channelsSummary": {
-                    "Kendi Satışlarım": "28,718 EUR",
-                    "Booking.Com (%15)": "131,693 EUR",
-                    "SabeeApp Rezervasyon Motoru": "1,391 EUR",
-                    "Telefon": "6,858 EUR",
-                    "Expedia (%18)": "54,251 EUR",
-                    "iptal - no show parası": "921 EUR",
-                    "VTS TURİZM LTD.ŞTİ.": "292 EUR",
-                    "Walk-in": "266 EUR"
+            "20apart": {
+                name: "20 Apart",
+                description: "Şişli, İstanbul'daki apart otelin detaylı performans verileri.",
+                performance: {
+                    occupancy: [20.05, 18.72, 38.94, 41.67, 42.17, 41.48, 75.91, 65.16, 46.67, 58.28, 77.33, 78.28],
+                    revenue: [255157.75, 163652.11, 360213.05, 436520.32, 507242.72, 604645.63, 1261524.55, 1085545.96, 771557.22, 947788.89, 1042786.65, 1238935.35]
                 },
-                "monthlyRevenue": [
-                    ["Ocak", 12582, 0],
-                    ["Şubat", 12975, 0],
-                    ["Mart", 11009, 0],
-                    ["Nisan", 17062, 0],
-                    ["Mayıs", 27392, 0],
-                    ["Haziran", 20505, 0],
-                    ["Temmuz", 20447, 0],
-                    ["Ağustos", 22545, 0],
-                    ["Eylül", 23575, 0],
-                    ["Ekim", 22981, 0],
-                    ["Kasım", 17571, 0],
-                    ["Aralık", 15955, 0]
-                ],
-                "occupancy": [52.18, 62.07, 47.44, 59.8, 82.16, 71.76, 67.36, 76.28, 84.31, 84.44, 66.27, 55.03]
+                sales: {
+                    roomNights: [63, 141, 324, 382, 82, 191, 148],
+                    roomNightsLastYear: [16, 28, 44, 15, 5, 48, 43]
+                }
             },
-            "ESKICILER": {
-                "title": "ISPARTA ESKICILER KONAGI",
-                "totalRevenue": "4,445,072 TRY",
-                "channelsSummary": {
-                    "Kendi Satışlarım": "1,952,276 TRY",
-                    "Booking.Com (%15)": "681,603 TRY",
-                    "SabeeApp Booking Engine": "370,219 TRY",
-                    "Telephone": "309,986 TRY",
-                    "Expedia (%18)": "412,289 TRY",
-                    "E-mail": "192,002 TRY",
-                    "Ets / Odamax (%15)": "181,378 TRY",
-                    "OtelZ (%15)": "73,713 TRY",
-                    "Walk-in": "77,487 TRY",
-                    "TatilSepeti": "10,312 TRY",
-                    "iptal - no show": "11,294 TRY"
+            "17room": {
+                name: "17 Room Residence",
+                description: "Taksim Gümüşsuyu'ndaki butik otelin performans raporu.",
+                performance: {
+                    occupancy: [5.65, 1.48, 15.21, 51.90, 46.54, 51.90, 74.37, 73.66, 51.49, 46.37, 33.51, 22.50],
+                    revenue: [101402.03, 10912.56, 117468.17, 476641.06, 558839.67, 586941.70, 779538.09, 802969.52, 703114.07, 617701.76, 412288.68, 251945.37]
                 },
-                "monthlyRevenue": [
-                    ["Ocak", 76095, 785],
-                    ["Şubat", 136029, 3434],
-                    ["Mart", 153104, 1900],
-                    ["Nisan", 413950, 26425],
-                    ["Mayıs", 413776, 20832],
-                    ["Haziran", 749607, 30475],
-                    ["Temmuz", 570552, 11314],
-                    ["Ğustos", 671832, 6838],
-                    ["Eylül", 412862, 53710],
-                    ["Ekim", 287901, 12165],
-                    ["Kasım", 187947, 2566],
-                    ["Aralık", 198933, 2034]
-                ],
-                "occupancy": [5.26, 8.89, 9.51, 22.81, 21.9, 39.12, 23.77, 28.01, 20.7, 11.88, 9.82, 7.47]
+                sales: {
+                    roomNights: [22, 53, 220, 100, 145, 336, 344],
+                    roomNightsLastYear: [51, 7, 4, 16, 11, 50, 43]
+                }
+            },
+            "topkapi": {
+                name: "55 odalı Topkapı Old City",
+                description: "Topkapı, İstanbul'daki orta segment otel performans detayları.",
+                performance: {
+                    occupancy: [63.19, 75.68, 62.97, 69.31, 93.95, 89.33, 86.56, 87.24, 86.65, 89.83, 67.06, 61.60],
+                    revenue: [1219195.06, 1167174.46, 1065214.68, 1851735.84, 2741146.65, 2572848.31, 2837415.01, 3022936.41, 2551196.06, 2812654.22, 1863085.64, 1664842.26]
+                },
+                sales: {
+                    roomNights: [260, 538, 929, 1675, 2527, 1695, 1085],
+                    roomNightsLastYear: [1830, 571, 315, 1308, 1334, 1126, 1112]
+                }
+            },
+            "23apart": {
+                name: "23 Apart Rezidans",
+                description: "Nişantaşı Blv üzerindeki lüks otel detaylı performans verileri.",
+                performance: {
+                    occupancy: [31.42, 28.49, 23.84, 39.28, 47.19, 55.19, 76.61, 80.64, 70.97, 57.26, 51.39, 41.53],
+                    revenue: [1337162.47, 1330668.16, 866995.55, 1753554.14, 2417810.86, 3333933.69, 4344136.85, 4747128.35, 3651116.72, 3289489.89, 2820697.15, 2276702.88]
+                },
+                sales: {
+                    roomNights: [42, 83, 68, 141, 128, 322, 204],
+                    roomNightsLastYear: [196, 15, 18, 93, 280, 76, 46]
+                }
             }
         };
 
-        // Function to update the dashboard
-        function updateDashboard() {
-            const selectedHotel = document.getElementById("hotelSelect").value;
-            const data = hotelsData[selectedHotel];
+        // Function to Update Graphs
+        function updateDashboard(hotelKey) {
+            const data = hotelData[hotelKey];
 
-            // Prepare channel summary table
-            let channelSummaryHtml = "";
-            for (const [channel, value] of Object.entries(data.channelsSummary)) {
-                const currency = selectedHotel === "ESKICILER" ? "TRY" : "EUR";
-                channelSummaryHtml += `<tr><td>${channel}</td><td>${value}</td></tr>`;
-            }
+            // Otel Performans Grafikleri
+            const occupancyTrace = {
+                x: months,
+                y: data.performance.occupancy,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Doluluk Oranı (%)',
+                line: { color: 'blue' },
+                marker: { size: 8 }
+            };
+            const revenueTrace = {
+                x: months,
+                y: data.performance.revenue,
+                type: 'bar',
+                name: 'Oda Geliri (TRY)',
+                marker: { color: 'orange', opacity: 0.8 }
+            };
+            Plotly.newPlot('hotel-performance', [occupancyTrace, revenueTrace], {
+                title: `${data.name} - Otel Performansı`,
+                xaxis: { title: 'Aylar' },
+                yaxis: { title: 'Değerler' },
+                barmode: 'group',
+                template: 'plotly_white'
+            });
 
-            // Update the dashboard content
-            document.getElementById("dashboard").innerHTML = `
-                <div class="metrics-box">
-                    <div>
-                        <h2>${data.title} - Toplam Brüt Gelir</h2>
-                        <p>${data.totalRevenue}</p>
-                    </div>
-                    <div>
-                        <h2>Kanal Gelir Özeti (Yıllık)</h2>
-                        <table border="1" style="margin: 0 auto; border-collapse: collapse; text-align: left;">
-                            <thead>
-                                <tr><th>Kanal</th><th>Toplam Gelir</th></tr>
-                            </thead>
-                            <tbody>
-                                ${channelSummaryHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="chart-section">
-                    <h2>Aylık Gelir Dağılımı</h2>
-                    <div id="bar_chart" style="width:100%; height:500px;"></div>
-                </div>
-                <div class="chart-section">
-                    <h2>Aylara Göre Doluluk Oranı</h2>
-                    <div id="line_chart" style="width:100%; height:500px;"></div>
-                </div>
-                <div class="chart-section">
-                    <h2>Kanal Gelir Dağılımı</h2>
-                    <div id="pie_chart" style="width:100%; height:500px;"></div>
-                </div>
-            `;
-
-            // Render bar chart for monthly revenue
-            const barData = [
-                {
-                    x: data.monthlyRevenue.map(item => item[0]),
-                    y: data.monthlyRevenue.map(item => item[1]),
-                    name: "Konaklama",
-                    type: "bar"
-                },
-                {
-                    x: data.monthlyRevenue.map(item => item[0]),
-                    y: data.monthlyRevenue.map(item => item[2]),
-                    name: "Hizmetler",
-                    type: "bar"
-                }
-            ];
-            Plotly.newPlot("bar_chart", barData, { title: `${data.title} - Aylık Gelir`, barmode: "stack" });
-
-            // Render line chart for occupancy
-            const lineData = [
-                {
-                    x: data.monthlyRevenue.map(item => item[0]),
-                    y: data.occupancy,
-                    type: "scatter",
-                    mode: "lines+markers",
-                    name: "Doluluk Oranı"
-                }
-            ];
-            Plotly.newPlot("line_chart", lineData, { title: `${data.title} - Doluluk Oranı` });
-
-            // Render pie chart for channel revenue
-            const pieData = [
-                {
-                    labels: Object.keys(data.channelsSummary),
-                    values: Object.values(data.channelsSummary).map(v => parseFloat(v.replace(/,/g, '').split(' ')[0])),
-                    type: "pie",
-                    name: "Kanal Gelir Dağılımı"
-                }
-            ];
-            Plotly.newPlot("pie_chart", pieData, { title: `${data.title} - Kanal Gelir` });
+            // Room Nights Comparison
+            const salesRoomNightsTrace = {
+                x: months,
+                y: data.sales.roomNights,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Room Nights (This Year)',
+                line: { color: 'blue' }
+            };
+            const salesRoomNightsLastYearTrace = {
+                x: months,
+                y: data.sales.roomNightsLastYear,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Room Nights (Last Year)',
+                line: { color: 'red', dash: 'dash' }
+            };
+            Plotly.newPlot('sales-performance-room-nights', [salesRoomNightsTrace, salesRoomNightsLastYearTrace], {
+                title: `${data.name} - Room Nights Comparison`,
+                xaxis: { title: 'Aylar' },
+                yaxis: { title: 'Room Nights' },
+                template: 'plotly_white'
+            });
         }
 
-        // Initialize the dashboard with the first hotel
-        updateDashboard();
+        // Initial Render
+        updateDashboard("53odal");
+
+        // Dropdown Change Event
+        document.getElementById('hotelSelector').addEventListener('change', (e) => {
+            updateDashboard(e.target.value);
+        });
     </script>
 </body>
 </html>
